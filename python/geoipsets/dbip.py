@@ -24,6 +24,9 @@ class DbIpProvider(utils.AbstractProvider):
         nftset_dir = self.base_dir / 'dbip/nftset' / utils.AddressFamily.IPV4.value
         ip6set_dir = self.base_dir / 'dbip/ipset' / utils.AddressFamily.IPV6.value
         nft6set_dir = self.base_dir / 'dbip/nftset' / utils.AddressFamily.IPV6.value
+        
+        fwdset_dir = self.base_dir / 'dbip/fwd' / utils.AddressFamily.IPV4.value
+        fwd6set_dir = self.base_dir / 'dbip/fwd' / utils.AddressFamily.IPV6.value
 
         # remove/re-create old IPv4 sets if they exist
         if ipset_dir.is_dir():
@@ -31,11 +34,16 @@ class DbIpProvider(utils.AbstractProvider):
 
         if nftset_dir.is_dir():
             shutil.rmtree(nftset_dir)
+            
+        if fwdset_dir.is_dir():
+            shutil.rmtree(fwdset_dir)
 
         if self.ip_tables:
             ipset_dir.mkdir(parents=True)
         if self.nf_tables:
             nftset_dir.mkdir(parents=True)
+        if self.fwd:
+            fwdset_dir.mkdir(parents=True)
 
         # remove/re-create old IPv6 sets if they exist
         if ip6set_dir.is_dir():
@@ -43,12 +51,17 @@ class DbIpProvider(utils.AbstractProvider):
 
         if nft6set_dir.is_dir():
             shutil.rmtree(nft6set_dir)
-
+            
+        if fwd6set_dir.is_dir():
+            shutil.rmtree(fwd6set_dir)
+            
         if self.ip_tables:
             ip6set_dir.mkdir(parents=True)
         if self.nf_tables:
             nft6set_dir.mkdir(parents=True)
-
+        if self.fwd:
+            fwd6set_dir.mkdir(parents=True)
+            
     def generate(self):
         """
         While nftables' set facility accepts both IPv4 and IPv6 IP ranges, ipset only accepts IPv4 IP ranges.
@@ -103,6 +116,11 @@ class DbIpProvider(utils.AbstractProvider):
                 nftset_file = open(nftset_path, 'w')
                 nftset_file.write("define " + set_name + " = {\n")
 
+            if self.fwd:
+                fwdset_path = self.base_dir / 'dbip/fwd' / ip_version / set_name
+                fwdset_file = open(fwdset_path, 'w')
+                fwdset_file.write("")
+
             # write ranges to file(s)
             for subnet in subnets:
                 if self.ip_tables:
@@ -110,10 +128,16 @@ class DbIpProvider(utils.AbstractProvider):
 
                 if self.nf_tables:
                     nftset_file.write(subnet + ",\n")
+                    
+                if self.fwd:
+                    fwdset_file.write(subnet + "\n")
 
             if self.ip_tables:
                 ipset_file.close()
 
+            if self.fwd:
+                fwdset_file.close()
+                
             if self.nf_tables:
                 nftset_file.write("}\n")
                 nftset_file.close()
