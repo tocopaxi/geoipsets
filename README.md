@@ -1,6 +1,6 @@
 geoipsets
 ============
-![badge](https://github.com/chr0mag/geoipsets/actions/workflows/python-tests.yaml/badge.svg) ![PyPI](https://img.shields.io/pypi/v/geoipsets) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geoipsets) [![Downloads](https://pepy.tech/badge/geoipsets)](https://pepy.tech/project/geoipsets) ![GitHub](https://img.shields.io/github/license/chr0mag/geoipsets)
+![badge](https://github.com/chr0mag/geoipsets/actions/workflows/ci.yaml/badge.svg) ![PyPI](https://img.shields.io/pypi/v/geoipsets) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/geoipsets) [![Downloads](https://pepy.tech/badge/geoipsets)](https://pepy.tech/project/geoipsets) ![GitHub](https://img.shields.io/github/license/chr0mag/geoipsets)
 
 Utility to generate country-specific IPv4/IPv6 network ranges consumable by both *iptables/ipset* and *nftables*. Also included is a *systemd* service and timer to periodically update the IP sets.
 
@@ -146,22 +146,24 @@ ExecStart=/usr/bin/nft --file /usr/local/bin/refresh-sets.nft
 ```
 Where *refresh-sets.nft* contains the *nft* commands listed above.
 
+Note that the  [example systemd service file](https://github.com/chr0mag/geoipsets/blob/main/systemd/update-geoipsets.service) is heavily sandboxed and does not have privileges to restart network services by default. See the example file for instructions showing how to loosen restrictions to enable this.
 
 Performance
 -----------
-The Python version is consistently over twice as fast as the Bash version when generating sets for both firewall types and both address families.
+* The Python version is much faster than the Bash version so use this if you have the choice.
+* Versions > v2.3.1 include a significant performance improvement when generating MaxMind data. (See [issue #16](https://github.com/chr0mag/geoipsets/issues/16) and [PR #24](https://github.com/chr0mag/geoipsets/pull/24).) 
 ```
-# BASH (maxmind)
-% time bash build-country-sets.sh 
-bash build-country-sets.sh  34.18s user 22.12s system 108% cpu 52.121 total
+# All tests below generate both ipv4 and ipv6 sets for both ipset and nftables.
+## Python
+% time python -m geoipsets -c ~/geoipsets.conf --provider maxmind --output-dir ~/tests
+1.80s user 0.07s system 56% cpu 3.315 total
 
-#PYTHON (maxmind)
-% time python -m geoipsets    
-python -m geoipsets  15.16s user 7.18s system 91% cpu 24.345 total
+% time python -m geoipsets -c ~/geoipsets.conf --provider dbip --output-dir ~/tests   
+10.74s user 0.11s system 94% cpu 11.487 total
 
-#PYTHON (dbip)
-% time python -m geoipsets    
-python -m geoipsets  14.25s user 0.14s system 91% cpu 15.690 total
+## Bash (maxmind only)
+% ./build-country-sets.sh
+34.62s user 31.62s system 107% cpu 1:01.68 total
 ```
 Sources
 ------------

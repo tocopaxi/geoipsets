@@ -28,10 +28,13 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     packages=find_packages(exclude=("tests",)),
     include_package_data=True,
-    install_requires=["requests"],
+    install_requires=["requests", "beautifulsoup4"],
     entry_points={
         "console_scripts": [
             "geoipsets=geoipsets.__main__:main",
